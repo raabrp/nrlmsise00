@@ -5,6 +5,9 @@ Uses NRLMSISE-00 (model 2001) C version, written by Dominik Brodowski - a
 translation of the original publication in FORTRAN by Mike Picone, Alan Hedin,
 and Doug Drob. Snapshots of both sources are included for reference.
 
+C-source: https://www.brodo.de/space/nrlmsise/
+Fortran source: https://ccmc.gsfc.nasa.gov/pub/modelweb/atmospheric/msis/nrlmsise00/
+
 Contents:
 
 libnrlmsise00.so  - compiled from c with gcc on Windows

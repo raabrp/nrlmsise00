@@ -358,10 +358,7 @@ if __name__ == "__main__":
     def flatten(nested_list):
         return [y for x in nested_list for y in x]
 
-    def compare(x, y):
-        '''
-        as error
-        '''
+    def as_relative_error(x, y):
         out = []
         for i in range(len(x)):
             if not x[i] == 0:
@@ -408,7 +405,7 @@ if __name__ == "__main__":
     def evaluate_test(index, **kwargs):
 
         # prtint percentage error
-        # print(compare(nominal[index], run_test(**kwargs)))
+        # print(as_relative_error(nominal[index], run_test(**kwargs)))
 
         # print returned values
         print(run_test(**kwargs))
