@@ -1,9 +1,50 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Python wrapper for NRLMSISE–00 (Model 2001)
+
+#
+# allow querying of internet resources for current space weather
+# (10.7 cm solar flux, geomagnetic ap index). May be ignored
+# below 80 km altitude.
+#
+
 ENABLE_SPACE_WEATHER = False
 
-from ctypes import *
+import os
 import datetime
+from ctypes import *
 
-c_nrlmsise = CDLL('libnrlmsise00.so')
+if ENABLE_SPACE_WEATHER:
+    import urllib.request
+    from bs4 import BeautifulSoup as Soup
+
+windows_so_name = 'libnrlmsise00.so'
+linux_so_name = 'libnrlmsise00.o'
+linux_compilation_command = "gcc -Wall -g -DINLINE -fPIC -shared -o libnrlmsise00.o nrlmsise-00.c nrlmsise-00.h nrlmsise-00_data.c"
+
+if os.name == 'nt': # windows
+    c_nrlmsise = CDLL(windows_so_name)
+else: # linux
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    if not os.path.exists(linux_so_name):
+        #
+        # While we could call the command to compile the object
+        # automatically, that feels transgressive.
+        #
+        raise RuntimeError(
+            '"{}" must be compiled before package "{}" can be used.\n'.format(
+                linux_so_name,
+                os.basename(dir_path)
+            ) +
+            'Please execute `{}` in {} and copy {} to {}'.format(
+                linux_compilation_command,
+                os.path.join(dir_path, src_c),
+                linux_so_name,
+                dir_path
+            )
+        )
+    c_nrlmsise = CDLL(os.path.join(dir_path, linux_so_name))
 
 ###############################################################################
 # Type and signature declarations
@@ -79,11 +120,19 @@ class C_Output(Structure):
 
 # neutral atmospheric model - anomalous oxygen
 c_nrlmsise.gtd7.restype = None
-c_nrlmsise.gtd7.argtypes = (C_Input, C_Flags, POINTER(C_Output))
+c_nrlmsise.gtd7.argtypes = (POINTER(C_Input), POINTER(C_Flags), POINTER(C_Output))
 
 # neutral atmospheric model + anomalous oxygen
 c_nrlmsise.gtd7d.restype = None
-c_nrlmsise.gtd7d.argtypes = (C_Input, C_Flags, POINTER(C_Output))
+c_nrlmsise.gtd7d.argtypes = (POINTER(C_Input), POINTER(C_Flags), POINTER(C_Output))
+
+# Thermospheric portion of model
+c_nrlmsise.gts7.restype = None
+c_nrlmsise.gts7.argtypes = (POINTER(C_Input), POINTER(C_Flags), POINTER(C_Output))
+
+# Output corresponding to pressure rather than altitude
+c_nrlmsise.ghp7.restype = None
+c_nrlmsise.ghp7.argtypes = (POINTER(C_Input), POINTER(C_Flags), POINTER(C_Output), c_double)
 
 ###############################################################################
 # Wrapping Function
@@ -91,17 +140,17 @@ c_nrlmsise.gtd7d.argtypes = (C_Input, C_Flags, POINTER(C_Output))
 
 def nrlmsise00(doy, sec, alt, g_lat, g_long, lst, f107A=150, f107=150, ap=4,
                ap_array=None, off_switches=None, cross_switches=None,
-               anomalous_oxygen=False):
+               anomalous_oxygen=False, thermospheric=False, at_pressure=None):
     '''
 
     ARGUMENTS:
 
-        doy: day of year 
-        sec: seconds in day (UT)
+        doy: day of year [integer]
+        sec: seconds in day (UT) [integer]
         alt: altitude (ambiguous?) [km]
         g_lat: geodetic latitude [deg]
         g_long: geodetic longitude [deg]
-        lst: local apparent solar time (hours), see note below
+        lst: local apparent solar time (see note below) [hours]
         f107A: 81 day average of F10.7 flux (centered on doy) [stu]
         f107: daily F10.7 flux for previous day [stu]
         ap: magnetic index (daily)
@@ -116,10 +165,14 @@ def nrlmsise00(doy, sec, alt, g_lat, g_long, lst, f107A=150, f107=150, ap=4,
             6: Average of eight 3 hr AP indicies from 36 to 57 hrs
                prior to current time
         off_switches: optional overide of switches (see docstring for
-                      C_Flags) as a list of indecies for switches to set to 0
+                      C_Flags) as a list of indices for switches to set to 0
         cross_switches: optional overide of switches (see docstring for
                         C_Flags) as a list of indecies for switches to set to 2
         anomalous_oxygen: whether to include anomalous oxygen in mass density
+                          [bool]
+        thermospheric: Use thermospheric portion of model [bool]
+        at_pressure: Return values at specified pressure, rather than altitude
+                    [Pa]. Frequently fails to converge ~ 1atm.
 
     UT, Local Time, and Longitude are used independently in the
     model and are not of equal importance for every situation.
@@ -205,10 +258,15 @@ def nrlmsise00(doy, sec, alt, g_lat, g_long, lst, f107A=150, f107=150, ap=4,
 
     c_out = C_Output()
 
-    if anomalous_oxygen:
-        c_nrlmsise.gtd7d(c_input, c_flags, c_out)
+    if not (at_pressure is None):
+        c_nrlmsise.ghp7(byref(c_input), byref(c_flags), byref(c_out), at_pressure)
+    elif thermospheric:
+        c_nrlmsise.gts7(byref(c_input), byref(c_flags), byref(c_out))
+    elif anomalous_oxygen:
+        c_nrlmsise.gtd7d(byref(c_input), byref(c_flags), byref(c_out))
     else:
-        c_nrlmsise.gtd7(c_input, c_flags, c_out)
+        c_nrlmsise.gtd7(byref(c_input), byref(c_flags), byref(c_out))
+
 
     #### end C subroutine
 
@@ -218,8 +276,6 @@ def nrlmsise00(doy, sec, alt, g_lat, g_long, lst, f107A=150, f107=150, ap=4,
 # SPACE WEATHER
 
 if ENABLE_SPACE_WEATHER:
-    import urllib.request
-    from bs4 import BeautifulSoup as Soup
 
     def get_latest_valid(x):
         while (x[-1] == -999.0):
@@ -355,6 +411,8 @@ class Atmosphere:
 # Test output
 if __name__ == "__main__":
 
+    print('Running inputs to compare against ref_output.txt')
+
     def flatten(nested_list):
         return [y for x in nested_list for y in x]
 
@@ -393,7 +451,6 @@ if __name__ == "__main__":
         atmo = Atmosphere(to_datetime(doy, sec), off_switches=[0], **kwargs)
         return flatten(atmo._full_output(g_lat, g_long, alt, lst))
 
-        
     # read nominal values
     with open('ref_output.txt') as f:
         ref_lines = f.read().split('\n')
@@ -427,5 +484,5 @@ if __name__ == "__main__":
     evaluate_test(14, alt=70)
     evaluate_test(15, use_ap_array=True)
     # evaluate_test(16, use_ap_array=True)
-    print("Test 16 not run. Referencing nrlmsise-00_test.c, I don't see how" +
-           " tests 15 and 16 differ in input...")
+    print("I could not tell how the input to test 17 differed from test 16, " +
+          "so this test has been omitted.")
