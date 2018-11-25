@@ -6,7 +6,7 @@ Wraps the C version of NRLMSISE-00 (model 2001), written by Dominik Brodowski
 and based on the original FORTRAN publication in FORTRAN by Mike Picone, Alan
 Hedin, and Doug Drob.
 
-Copies of these original sources are provided for reference, obtained from:
+Copies of these original sources are included for reference, obtained from:
 * C-source: https://www.brodo.de/space/nrlmsise/
 * Fortran source: https://ccmc.gsfc.nasa.gov/pub/modelweb/atmospheric/msis/nrlmsise00/
 
@@ -15,9 +15,9 @@ Copies of these original sources are provided for reference, obtained from:
 ```
 .
 ├── /src_c            C source code (Dominik Brodowski)
-├── /src_f            FORTRAN source code (Picone, Hedin, Drob), for reference
+├── /src_f            FORTRAN source code (Picone, Hedin, Drob)
 ├── libnrlmsise00.so  compiled from c with gcc for Windows
-├── nrlmsise00.py     wraps .so using ctypes
+├── nrlmsise00.py     wraps compiled code using ctypes
 ├── ref_output.txt    Test values to recreate by running nrlmsise.py directly
 └── readme.md         You are reading it now
 ```
@@ -62,9 +62,9 @@ of the file allows the instantiation of `Atmosphere` to poll online resources
 [NWRA](https://spawx.nwra.com/spawx/env_latest.html) for current 10.7cm solar 
 flux and geomagnetic activity.
 
-# Notes
+# Tests
 
 Sample output given by the C and Fortran sources was successfully recreated.
 Running `nrlmsise00.py` and comparing against `ref_output.txt` (copied from the
 C source) should demonstrate this. I could not tell how the input to test 17
-differed from test 16, so this test has been omitted.
+differed from test 16 by inspecting the c source, so this test has been omitted.
