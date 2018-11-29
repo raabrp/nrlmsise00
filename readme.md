@@ -26,15 +26,18 @@ Copies of these original sources are included for reference, obtained from:
 
 If and only if you wish to allow the script to automatically query internet
 resources for current space weather (10.7 cm solar flux and geomagnetic ap
-index) This may be ignored for modeling below 80 km.:
+index):
 
     * [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
+
+This may be ignored for modeling below 80 km.
 
 # Installation
 
 ## Windows
 
-One *should* have to do nothing ...this assertion is yet untested however.
+One *should* have to do nothing other than copy this repo (the compiled binary
+should just work)...this assertion is yet untested however.
 
 The included copy of `libnrlmsise00.so` was compiled with gcc via:
 
@@ -50,15 +53,15 @@ Navigate to `src_c` and compile the shared object file:
 
 Copy the output (`libnrlmsise00.o`) to the repository root.
 
-# Use
+# Usage
 
-Class `Atmosphere` allows for some convenience (such as using current date and
-time and optionally fetching current space weather), but the most direct access
-to the model is available through the function `nrlmsise00`, (featuring a 
-hefty docstring).
+Class `Atmosphere` allows for some convenience (such as using current date/time
+and optionally fetching current space weather), but the most direct access to
+the model is available through the function `nrlmsise00` (featuring a hefty
+docstring).
 
 Finally, the flag `ENABLE_SPACE_WEATHER` (disable by default) defined at the top
-of the file allows the instantiation of `Atmosphere` to poll online resources 
+of `nrlmsise00.py` allows instantiation of `Atmosphere` to poll online resources
 [NWRA](https://spawx.nwra.com/spawx/env_latest.html) for current 10.7cm solar 
 flux and geomagnetic activity.
 
@@ -67,4 +70,5 @@ flux and geomagnetic activity.
 Sample output given by the C and Fortran sources was successfully recreated.
 Running `nrlmsise00.py` and comparing against `ref_output.txt` (copied from the
 C source) should demonstrate this. I could not tell how the input to test 17
-differed from test 16 by inspecting the c source, so this test has been omitted.
+differed from test 16 by inspecting the c source however, so this test has been
+omitted.
