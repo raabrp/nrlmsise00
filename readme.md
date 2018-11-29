@@ -28,7 +28,7 @@ If and only if you wish to allow the script to automatically query internet
 resources for current space weather (10.7 cm solar flux and geomagnetic ap
 index):
 
-    * [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
+* [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
 
 This may be ignored for modeling below 80 km.
 
