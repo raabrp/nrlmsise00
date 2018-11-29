@@ -3,8 +3,8 @@ Python wrapper for [NRLMSISE-00](https://en.wikipedia.org/wiki/NRLMSISE-00)
 # About
 
 Wraps the C version of NRLMSISE-00 (model 2001), written by Dominik Brodowski
-and based on the original FORTRAN publication in FORTRAN by Mike Picone, Alan
-Hedin, and Doug Drob.
+and based on the original FORTRAN publication by Mike Picone, Alan Hedin, and
+Doug Drob.
 
 Copies of these original sources are included for reference, obtained from:
 * C-source: https://www.brodo.de/space/nrlmsise/
